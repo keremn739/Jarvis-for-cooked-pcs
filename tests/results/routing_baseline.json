@@ -1,0 +1,807 @@
+{
+  "generated_at": "2026-09-20T08:46:15+00:00",
+  "case_count": 52,
+  "routed": 0,
+  "unavailable": 52,
+  "passed": 0,
+  "failed": 0,
+  "accuracy": null,
+  "by_category": {
+    "GET_TIME": {
+      "passed": 0,
+      "total": 10
+    },
+    "OPEN_APP": {
+      "passed": 0,
+      "total": 15
+    },
+    "LOCAL": {
+      "passed": 0,
+      "total": 20
+    },
+    "CLOUD": {
+      "passed": 0,
+      "total": 7
+    }
+  },
+  "cases": [
+    {
+      "id": "001",
+      "category": "GET_TIME",
+      "input": "What time is it?",
+      "expected": [
+        {
+          "type": "TOOL",
+          "action": "GET_TIME",
+          "target": null
+        }
+      ],
+      "actual": null,
+      "actual_plan": null,
+      "passed": false,
+      "error": "URLError: <urlopen error [Errno 1] Operation not permitted>"
+    },
+    {
+      "id": "002",
+      "category": "GET_TIME",
+      "input": "Tell me the current time.",
+      "expected": [
+        {
+          "type": "TOOL",
+          "action": "GET_TIME",
+          "target": null
+        }
+      ],
+      "actual": null,
+      "actual_plan": null,
+      "passed": false,
+      "error": "URLError: <urlopen error [Errno 1] Operation not permitted>"
+    },
+    {
+      "id": "003",
+      "category": "GET_TIME",
+      "input": "What's the time right now?",
+      "expected": [
+        {
+          "type": "TOOL",
+          "action": "GET_TIME",
+          "target": null
+        }
+      ],
+      "actual": null,
+      "actual_plan": null,
+      "passed": false,
+      "error": "URLError: <urlopen error [Errno 1] Operation not permitted>"
+    },
+    {
+      "id": "004",
+      "category": "GET_TIME",
+      "input": "Can you tell me the time?",
+      "expected": [
+        {
+          "type": "TOOL",
+          "action": "GET_TIME",
+          "target": null
+        }
+      ],
+      "actual": null,
+      "actual_plan": null,
+      "passed": false,
+      "error": "URLError: <urlopen error [Errno 1] Operation not permitted>"
+    },
+    {
+      "id": "005",
+      "category": "GET_TIME",
+      "input": "saat kaç?",
+      "expected": [
+        {
+          "type": "TOOL",
+          "action": "GET_TIME",
+          "target": null
+        }
+      ],
+      "actual": null,
+      "actual_plan": null,
+      "passed": false,
+      "error": "URLError: <urlopen error [Errno 1] Operation not permitted>"
+    },
+    {
+      "id": "006",
+      "category": "GET_TIME",
+      "input": "şu an saat kaç",
+      "expected": [
+        {
+          "type": "TOOL",
+          "action": "GET_TIME",
+          "target": null
+        }
+      ],
+      "actual": null,
+      "actual_plan": null,
+      "passed": false,
+      "error": "URLError: <urlopen error [Errno 1] Operation not permitted>"
+    },
+    {
+      "id": "007",
+      "category": "GET_TIME",
+      "input": "bana saati söyler misin",
+      "expected": [
+        {
+          "type": "TOOL",
+          "action": "GET_TIME",
+          "target": null
+        }
+      ],
+      "actual": null,
+      "actual_plan": null,
+      "passed": false,
+      "error": "URLError: <urlopen error [Errno 1] Operation not permitted>"
+    },
+    {
+      "id": "008",
+      "category": "GET_TIME",
+      "input": "what's the current time",
+      "expected": [
+        {
+          "type": "TOOL",
+          "action": "GET_TIME",
+          "target": null
+        }
+      ],
+      "actual": null,
+      "actual_plan": null,
+      "passed": false,
+      "error": "URLError: <urlopen error [Errno 1] Operation not permitted>"
+    },
+    {
+      "id": "009",
+      "category": "GET_TIME",
+      "input": "time?",
+      "expected": [
+        {
+          "type": "TOOL",
+          "action": "GET_TIME",
+          "target": null
+        }
+      ],
+      "actual": null,
+      "actual_plan": null,
+      "passed": false,
+      "error": "URLError: <urlopen error [Errno 1] Operation not permitted>"
+    },
+    {
+      "id": "010",
+      "category": "GET_TIME",
+      "input": "could you check the time for me",
+      "expected": [
+        {
+          "type": "TOOL",
+          "action": "GET_TIME",
+          "target": null
+        }
+      ],
+      "actual": null,
+      "actual_plan": null,
+      "passed": false,
+      "error": "URLError: <urlopen error [Errno 1] Operation not permitted>"
+    },
+    {
+      "id": "011",
+      "category": "OPEN_APP",
+      "input": "Open Chrome.",
+      "expected": [
+        {
+          "type": "TOOL",
+          "action": "OPEN_APP",
+          "target": "chrome"
+        }
+      ],
+      "actual": null,
+      "actual_plan": null,
+      "passed": false,
+      "error": "URLError: <urlopen error [Errno 1] Operation not permitted>"
+    },
+    {
+      "id": "012",
+      "category": "OPEN_APP",
+      "input": "Open Google Chrome.",
+      "expected": [
+        {
+          "type": "TOOL",
+          "action": "OPEN_APP",
+          "target": "chrome"
+        }
+      ],
+      "actual": null,
+      "actual_plan": null,
+      "passed": false,
+      "error": "URLError: <urlopen error [Errno 1] Operation not permitted>"
+    },
+    {
+      "id": "013",
+      "category": "OPEN_APP",
+      "input": "Launch Chrome.",
+      "expected": [
+        {
+          "type": "TOOL",
+          "action": "OPEN_APP",
+          "target": "chrome"
+        }
+      ],
+      "actual": null,
+      "actual_plan": null,
+      "passed": false,
+      "error": "URLError: <urlopen error [Errno 1] Operation not permitted>"
+    },
+    {
+      "id": "014",
+      "category": "OPEN_APP",
+      "input": "Start Chrome.",
+      "expected": [
+        {
+          "type": "TOOL",
+          "action": "OPEN_APP",
+          "target": "chrome"
+        }
+      ],
+      "actual": null,
+      "actual_plan": null,
+      "passed": false,
+      "error": "URLError: <urlopen error [Errno 1] Operation not permitted>"
+    },
+    {
+      "id": "015",
+      "category": "OPEN_APP",
+      "input": "chrome aç",
+      "expected": [
+        {
+          "type": "TOOL",
+          "action": "OPEN_APP",
+          "target": "chrome"
+        }
+      ],
+      "actual": null,
+      "actual_plan": null,
+      "passed": false,
+      "error": "URLError: <urlopen error [Errno 1] Operation not permitted>"
+    },
+    {
+      "id": "016",
+      "category": "OPEN_APP",
+      "input": "Google Chrome'u aç.",
+      "expected": [
+        {
+          "type": "TOOL",
+          "action": "OPEN_APP",
+          "target": "chrome"
+        }
+      ],
+      "actual": null,
+      "actual_plan": null,
+      "passed": false,
+      "error": "URLError: <urlopen error [Errno 1] Operation not permitted>"
+    },
+    {
+      "id": "017",
+      "category": "OPEN_APP",
+      "input": "Open Notepad.",
+      "expected": [
+        {
+          "type": "TOOL",
+          "action": "OPEN_APP",
+          "target": "notepad"
+        }
+      ],
+      "actual": null,
+      "actual_plan": null,
+      "passed": false,
+      "error": "URLError: <urlopen error [Errno 1] Operation not permitted>"
+    },
+    {
+      "id": "018",
+      "category": "OPEN_APP",
+      "input": "Launch Notepad.",
+      "expected": [
+        {
+          "type": "TOOL",
+          "action": "OPEN_APP",
+          "target": "notepad"
+        }
+      ],
+      "actual": null,
+      "actual_plan": null,
+      "passed": false,
+      "error": "URLError: <urlopen error [Errno 1] Operation not permitted>"
+    },
+    {
+      "id": "019",
+      "category": "OPEN_APP",
+      "input": "notepad aç",
+      "expected": [
+        {
+          "type": "TOOL",
+          "action": "OPEN_APP",
+          "target": "notepad"
+        }
+      ],
+      "actual": null,
+      "actual_plan": null,
+      "passed": false,
+      "error": "URLError: <urlopen error [Errno 1] Operation not permitted>"
+    },
+    {
+      "id": "020",
+      "category": "OPEN_APP",
+      "input": "Open the calculator.",
+      "expected": [
+        {
+          "type": "TOOL",
+          "action": "OPEN_APP",
+          "target": "calculator"
+        }
+      ],
+      "actual": null,
+      "actual_plan": null,
+      "passed": false,
+      "error": "URLError: <urlopen error [Errno 1] Operation not permitted>"
+    },
+    {
+      "id": "021",
+      "category": "OPEN_APP",
+      "input": "Launch calculator.",
+      "expected": [
+        {
+          "type": "TOOL",
+          "action": "OPEN_APP",
+          "target": "calculator"
+        }
+      ],
+      "actual": null,
+      "actual_plan": null,
+      "passed": false,
+      "error": "URLError: <urlopen error [Errno 1] Operation not permitted>"
+    },
+    {
+      "id": "022",
+      "category": "OPEN_APP",
+      "input": "hesap makinesini aç",
+      "expected": [
+        {
+          "type": "TOOL",
+          "action": "OPEN_APP",
+          "target": "calculator"
+        }
+      ],
+      "actual": null,
+      "actual_plan": null,
+      "passed": false,
+      "error": "URLError: <urlopen error [Errno 1] Operation not permitted>"
+    },
+    {
+      "id": "023",
+      "category": "OPEN_APP",
+      "input": "start the calculator",
+      "expected": [
+        {
+          "type": "TOOL",
+          "action": "OPEN_APP",
+          "target": "calculator"
+        }
+      ],
+      "actual": null,
+      "actual_plan": null,
+      "passed": false,
+      "error": "URLError: <urlopen error [Errno 1] Operation not permitted>"
+    },
+    {
+      "id": "024",
+      "category": "OPEN_APP",
+      "input": "Can you open Chrome for me?",
+      "expected": [
+        {
+          "type": "TOOL",
+          "action": "OPEN_APP",
+          "target": "chrome"
+        }
+      ],
+      "actual": null,
+      "actual_plan": null,
+      "passed": false,
+      "error": "URLError: <urlopen error [Errno 1] Operation not permitted>"
+    },
+    {
+      "id": "025",
+      "category": "OPEN_APP",
+      "input": "Please launch the calculator.",
+      "expected": [
+        {
+          "type": "TOOL",
+          "action": "OPEN_APP",
+          "target": "calculator"
+        }
+      ],
+      "actual": null,
+      "actual_plan": null,
+      "passed": false,
+      "error": "URLError: <urlopen error [Errno 1] Operation not permitted>"
+    },
+    {
+      "id": "026",
+      "category": "LOCAL",
+      "input": "What is Python?",
+      "expected": [
+        {
+          "type": "LOCAL"
+        }
+      ],
+      "actual": null,
+      "actual_plan": null,
+      "passed": false,
+      "error": "URLError: <urlopen error [Errno 1] Operation not permitted>"
+    },
+    {
+      "id": "027",
+      "category": "LOCAL",
+      "input": "Explain what a Python function is.",
+      "expected": [
+        {
+          "type": "LOCAL"
+        }
+      ],
+      "actual": null,
+      "actual_plan": null,
+      "passed": false,
+      "error": "URLError: <urlopen error [Errno 1] Operation not permitted>"
+    },
+    {
+      "id": "028",
+      "category": "LOCAL",
+      "input": "How does a for loop work?",
+      "expected": [
+        {
+          "type": "LOCAL"
+        }
+      ],
+      "actual": null,
+      "actual_plan": null,
+      "passed": false,
+      "error": "URLError: <urlopen error [Errno 1] Operation not permitted>"
+    },
+    {
+      "id": "029",
+      "category": "LOCAL",
+      "input": "What is recursion?",
+      "expected": [
+        {
+          "type": "LOCAL"
+        }
+      ],
+      "actual": null,
+      "actual_plan": null,
+      "passed": false,
+      "error": "URLError: <urlopen error [Errno 1] Operation not permitted>"
+    },
+    {
+      "id": "030",
+      "category": "LOCAL",
+      "input": "Explain object oriented programming.",
+      "expected": [
+        {
+          "type": "LOCAL"
+        }
+      ],
+      "actual": null,
+      "actual_plan": null,
+      "passed": false,
+      "error": "URLError: <urlopen error [Errno 1] Operation not permitted>"
+    },
+    {
+      "id": "031",
+      "category": "LOCAL",
+      "input": "What is an API?",
+      "expected": [
+        {
+          "type": "LOCAL"
+        }
+      ],
+      "actual": null,
+      "actual_plan": null,
+      "passed": false,
+      "error": "URLError: <urlopen error [Errno 1] Operation not permitted>"
+    },
+    {
+      "id": "032",
+      "category": "LOCAL",
+      "input": "What is SQLite?",
+      "expected": [
+        {
+          "type": "LOCAL"
+        }
+      ],
+      "actual": null,
+      "actual_plan": null,
+      "passed": false,
+      "error": "URLError: <urlopen error [Errno 1] Operation not permitted>"
+    },
+    {
+      "id": "033",
+      "category": "LOCAL",
+      "input": "Explain what a database is.",
+      "expected": [
+        {
+          "type": "LOCAL"
+        }
+      ],
+      "actual": null,
+      "actual_plan": null,
+      "passed": false,
+      "error": "URLError: <urlopen error [Errno 1] Operation not permitted>"
+    },
+    {
+      "id": "034",
+      "category": "LOCAL",
+      "input": "How does RAM work?",
+      "expected": [
+        {
+          "type": "LOCAL"
+        }
+      ],
+      "actual": null,
+      "actual_plan": null,
+      "passed": false,
+      "error": "URLError: <urlopen error [Errno 1] Operation not permitted>"
+    },
+    {
+      "id": "035",
+      "category": "LOCAL",
+      "input": "What is a CPU?",
+      "expected": [
+        {
+          "type": "LOCAL"
+        }
+      ],
+      "actual": null,
+      "actual_plan": null,
+      "passed": false,
+      "error": "URLError: <urlopen error [Errno 1] Operation not permitted>"
+    },
+    {
+      "id": "036",
+      "category": "LOCAL",
+      "input": "What is the difference between RAM and storage?",
+      "expected": [
+        {
+          "type": "LOCAL"
+        }
+      ],
+      "actual": null,
+      "actual_plan": null,
+      "passed": false,
+      "error": "URLError: <urlopen error [Errno 1] Operation not permitted>"
+    },
+    {
+      "id": "037",
+      "category": "LOCAL",
+      "input": "Explain TCP in simple terms.",
+      "expected": [
+        {
+          "type": "LOCAL"
+        }
+      ],
+      "actual": null,
+      "actual_plan": null,
+      "passed": false,
+      "error": "URLError: <urlopen error [Errno 1] Operation not permitted>"
+    },
+    {
+      "id": "038",
+      "category": "LOCAL",
+      "input": "What is HTTP?",
+      "expected": [
+        {
+          "type": "LOCAL"
+        }
+      ],
+      "actual": null,
+      "actual_plan": null,
+      "passed": false,
+      "error": "URLError: <urlopen error [Errno 1] Operation not permitted>"
+    },
+    {
+      "id": "039",
+      "category": "LOCAL",
+      "input": "How does DNS work?",
+      "expected": [
+        {
+          "type": "LOCAL"
+        }
+      ],
+      "actual": null,
+      "actual_plan": null,
+      "passed": false,
+      "error": "URLError: <urlopen error [Errno 1] Operation not permitted>"
+    },
+    {
+      "id": "040",
+      "category": "LOCAL",
+      "input": "What does a GPU do?",
+      "expected": [
+        {
+          "type": "LOCAL"
+        }
+      ],
+      "actual": null,
+      "actual_plan": null,
+      "passed": false,
+      "error": "URLError: <urlopen error [Errno 1] Operation not permitted>"
+    },
+    {
+      "id": "041",
+      "category": "LOCAL",
+      "input": "Python'da liste nedir?",
+      "expected": [
+        {
+          "type": "LOCAL"
+        }
+      ],
+      "actual": null,
+      "actual_plan": null,
+      "passed": false,
+      "error": "URLError: <urlopen error [Errno 1] Operation not permitted>"
+    },
+    {
+      "id": "042",
+      "category": "LOCAL",
+      "input": "Python'da dictionary nasıl çalışır?",
+      "expected": [
+        {
+          "type": "LOCAL"
+        }
+      ],
+      "actual": null,
+      "actual_plan": null,
+      "passed": false,
+      "error": "URLError: <urlopen error [Errno 1] Operation not permitted>"
+    },
+    {
+      "id": "043",
+      "category": "LOCAL",
+      "input": "recursion nedir?",
+      "expected": [
+        {
+          "type": "LOCAL"
+        }
+      ],
+      "actual": null,
+      "actual_plan": null,
+      "passed": false,
+      "error": "URLError: <urlopen error [Errno 1] Operation not permitted>"
+    },
+    {
+      "id": "044",
+      "category": "LOCAL",
+      "input": "SQLite ne işe yarar?",
+      "expected": [
+        {
+          "type": "LOCAL"
+        }
+      ],
+      "actual": null,
+      "actual_plan": null,
+      "passed": false,
+      "error": "URLError: <urlopen error [Errno 1] Operation not permitted>"
+    },
+    {
+      "id": "045",
+      "category": "LOCAL",
+      "input": "RAM ile SSD arasındaki fark nedir?",
+      "expected": [
+        {
+          "type": "LOCAL"
+        }
+      ],
+      "actual": null,
+      "actual_plan": null,
+      "passed": false,
+      "error": "URLError: <urlopen error [Errno 1] Operation not permitted>"
+    },
+    {
+      "id": "046",
+      "category": "CLOUD",
+      "input": "What's the weather today?",
+      "expected": [
+        {
+          "type": "CLOUD"
+        }
+      ],
+      "actual": null,
+      "actual_plan": null,
+      "passed": false,
+      "error": "URLError: <urlopen error [Errno 1] Operation not permitted>"
+    },
+    {
+      "id": "047",
+      "category": "CLOUD",
+      "input": "What's the weather right now?",
+      "expected": [
+        {
+          "type": "CLOUD"
+        }
+      ],
+      "actual": null,
+      "actual_plan": null,
+      "passed": false,
+      "error": "URLError: <urlopen error [Errno 1] Operation not permitted>"
+    },
+    {
+      "id": "048",
+      "category": "CLOUD",
+      "input": "What's happening in the markets today?",
+      "expected": [
+        {
+          "type": "CLOUD"
+        }
+      ],
+      "actual": null,
+      "actual_plan": null,
+      "passed": false,
+      "error": "URLError: <urlopen error [Errno 1] Operation not permitted>"
+    },
+    {
+      "id": "049",
+      "category": "CLOUD",
+      "input": "What's the latest news about NVIDIA?",
+      "expected": [
+        {
+          "type": "CLOUD"
+        }
+      ],
+      "actual": null,
+      "actual_plan": null,
+      "passed": false,
+      "error": "URLError: <urlopen error [Errno 1] Operation not permitted>"
+    },
+    {
+      "id": "050",
+      "category": "CLOUD",
+      "input": "What is the current price of Bitcoin?",
+      "expected": [
+        {
+          "type": "CLOUD"
+        }
+      ],
+      "actual": null,
+      "actual_plan": null,
+      "passed": false,
+      "error": "URLError: <urlopen error [Errno 1] Operation not permitted>"
+    },
+    {
+      "id": "051",
+      "category": "CLOUD",
+      "input": "What's the latest version of Python?",
+      "expected": [
+        {
+          "type": "CLOUD"
+        }
+      ],
+      "actual": null,
+      "actual_plan": null,
+      "passed": false,
+      "error": "URLError: <urlopen error [Errno 1] Operation not permitted>"
+    },
+    {
+      "id": "052",
+      "category": "CLOUD",
+      "input": "What happened in tech today?",
+      "expected": [
+        {
+          "type": "CLOUD"
+        }
+      ],
+      "actual": null,
+      "actual_plan": null,
+      "passed": false,
+      "error": "URLError: <urlopen error [Errno 1] Operation not permitted>"
+    }
+  ]
+}

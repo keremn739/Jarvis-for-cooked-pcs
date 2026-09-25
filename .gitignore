@@ -1,1 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Databases / local data
+jarvis.db
 data/*.db
+
+# Environment / secrets
+.env
+.env.*
+*.key
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Logs
+*.log

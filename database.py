@@ -36,6 +36,15 @@ def initialize_database():
     connection = _connect()
     connection.execute(
         """
+        CREATE TABLE IF NOT EXISTS interaction_history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            message TEXT NOT NULL,
+            created_at TEXT NOT NULL
+        )
+        """
+    )
+    connection.execute(
+        """
         CREATE TABLE IF NOT EXISTS memories (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             content TEXT NOT NULL,
@@ -99,6 +108,29 @@ def add_memory(content, embedding=None, memory_type="FACT", confidence=1.0):
     memory_id = cursor.lastrowid
     connection.close()
     return memory_id
+
+
+def add_interaction(message):
+    """Persist one privacy-filtered user interaction and its UTC timestamp."""
+    connection = _connect()
+    cursor = connection.execute(
+        "INSERT INTO interaction_history (message, created_at) VALUES (?, ?)",
+        (message, _utc_now()),
+    )
+    connection.commit()
+    interaction_id = cursor.lastrowid
+    connection.close()
+    return interaction_id
+
+
+def get_interactions():
+    """Return interaction rows as (id, message, created_at)."""
+    connection = _connect()
+    interactions = connection.execute(
+        "SELECT id, message, created_at FROM interaction_history ORDER BY id"
+    ).fetchall()
+    connection.close()
+    return interactions
 
 
 def get_memories():

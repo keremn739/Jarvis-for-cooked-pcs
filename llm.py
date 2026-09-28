@@ -183,6 +183,12 @@ LOCAL has a memory field:
 - memory=true
 - memory=false
 
+IMPORTANT OUTPUT FORMAT:
+The value of "type" must be exactly "LOCAL".
+Do NOT write "LOCAL + memory=true", "LOCAL+memory=true", or any other
+combined value in the "type" field. Put the memory decision ONLY in the
+separate "memory" field.
+
 ==================================================
 LOCAL + MEMORY
 ==================================================

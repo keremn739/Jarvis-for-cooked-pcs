@@ -42,7 +42,21 @@ def validate_step(step, message):
     if not isinstance(step, dict):
         return None
 
-    step_type = str(step.get("type", "")).upper()
+    raw_step_type = str(step.get("type", "")).strip().upper()
+
+    # Gemma sometimes combines the LOCAL route and memory flag into the
+    # type string even though the schema defines memory as a separate field.
+    # Normalize that specific formatting error instead of rejecting an
+    # otherwise correct personal-memory decision.
+    if raw_step_type in {
+        "LOCAL + MEMORY=TRUE",
+        "LOCAL+MEMORY=TRUE",
+    }:
+        step_type = "LOCAL"
+        step["memory"] = True
+    else:
+        step_type = raw_step_type
+
     action = step.get("action")
     target = step.get("target")
     content = step.get("content")

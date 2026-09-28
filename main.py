@@ -14,16 +14,23 @@ from interaction_history import enqueue_interaction, close_interaction_history
 
 
 while True:
-    message = input("You: ")
+    try:
+        message = input("You: ")
+    except (EOFError, KeyboardInterrupt):
+        print("\nJARVIS: Goodbye.")
+        close_interaction_history()
+        break
 
-    if message.lower() in {"exit", "quit"}:
+    command = message.strip().lower()
+
+    if command in {"exit", "quit"}:
         print("JARVIS: Goodbye.")
         close_interaction_history()
         break
 
     try:
-        if message.startswith("remember "):
-            content = message[9:]
+        if command.startswith("remember "):
+            content = message.strip()[9:]
 
             try:
                 result = remember(content)
@@ -37,7 +44,7 @@ while True:
                 else:
                     print("JARVIS: That memory is already saved.")
 
-        elif message == "what do you remember":
+        elif command == "what do you remember":
 
             memories = get_all_memories()
 
@@ -46,16 +53,16 @@ while True:
             for memory in memories:
                 print(memory[1])
 
-        elif message.startswith("find "):
+        elif command.startswith("find "):
 
-            memories = search_memories(message[5:])
+            memories = search_memories(message.strip()[5:])
 
             print("JARVIS found:")
 
             for memory in memories:
                 print(memory[0])
 
-        elif message == "forget everything":
+        elif command == "forget everything":
 
             memories = get_all_memories()
 
@@ -99,14 +106,21 @@ while True:
 
                     print("JARVIS [Local]: ", end="")
 
-                    ask_llm(prompt)
+                    try:
+                        ask_llm(prompt)
+                    except Exception as error:
+                        print(f"Local model unavailable: {error}")
 
                 elif step_type == "TOOL":
 
-                    result = execute_tool(
-                        step["action"],
-                        step.get("target")
-                    )
+                    try:
+                        result = execute_tool(
+                            step["action"],
+                            step.get("target")
+                        )
+                    except Exception as error:
+                        print(f"Tool execution failed: {error}")
+                        continue
 
                     if result is False:
 

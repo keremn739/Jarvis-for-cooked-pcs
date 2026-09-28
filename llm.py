@@ -3,24 +3,35 @@ import json
 import time
 
 
-def ask_llm(message):
+OLLAMA_URL = "http://localhost:11434/api/generate"
+LOCAL_MODEL = "gemma3:4b"
+OLLAMA_TIMEOUT = 120
 
+
+def _ollama_generate(prompt, *, stream=False, output_format=None):
     data = {
-        "model": "gemma3:4b",
-        "prompt": message,
-        "stream": True,
-        "think": False
+        "model": LOCAL_MODEL,
+        "prompt": prompt,
+        "stream": stream,
+        "think": False,
     }
 
+    if output_format is not None:
+        data["format"] = output_format
+
     request = urllib.request.Request(
-        "http://localhost:11434/api/generate",
+        OLLAMA_URL,
         data=json.dumps(data).encode("utf-8"),
-        headers={"Content-Type": "application/json"}
+        headers={"Content-Type": "application/json"},
     )
 
-    start = time.time()
+    return urllib.request.urlopen(request, timeout=OLLAMA_TIMEOUT)
 
-    response = urllib.request.urlopen(request)
+
+def ask_llm(message):
+
+    start = time.time()
+    response = _ollama_generate(message, stream=True)
 
     answer = ""
     first_token_time = None
@@ -32,20 +43,26 @@ def ask_llm(message):
             break
 
         result = json.loads(line)
+        chunk = result.get("response", "")
 
-        if first_token_time is None and result["response"]:
+        if first_token_time is None and chunk:
             first_token_time = time.time()
 
-        answer += result["response"]
-        print(result["response"], end="", flush=True)
+        answer += chunk
+        print(chunk, end="", flush=True)
 
-        if result["done"]:
+        if result.get("done", False):
             break
 
     end = time.time()
 
     print()
-    print(f"\n[Time to first token: {first_token_time - start:.2f} seconds]")
+
+    if first_token_time is None:
+        print("[Time to first token: unavailable]")
+    else:
+        print(f"[Time to first token: {first_token_time - start:.2f} seconds]")
+
     print(f"[Total response time: {end - start:.2f} seconds]")
 
     return answer
@@ -53,30 +70,19 @@ def ask_llm(message):
 
 def ask_llm_json(message):
 
-    data = {
-        "model": "gemma3:4b",
-        "prompt": message,
-        "stream": False,
-        "format": "json",
-        "think": False
-    }
-
-    request = urllib.request.Request(
-        "http://localhost:11434/api/generate",
-        data=json.dumps(data).encode("utf-8"),
-        headers={"Content-Type": "application/json"}
+    response = _ollama_generate(
+        message,
+        stream=False,
+        output_format="json",
     )
 
-    response = urllib.request.urlopen(request)
-
     result = json.loads(response.read().decode("utf-8"))
-
     return result["response"]
 
 
 def ask_router(message):
 
-    prompt = f"""
+
 You are the routing and planning brain of a personal AI assistant.
 
 Analyze the user's request semantically and create an ordered execution plan.
@@ -434,24 +440,11 @@ NEVER output:
 
 User message:
 {message}
-"""
-
-    data = {
-        "model": "gemma3:4b",
-        "prompt": prompt,
-        "stream": False,
-        "format": "json",
-        "think": False
-    }
-
-    request = urllib.request.Request(
-        "http://localhost:11434/api/generate",
-        data=json.dumps(data).encode("utf-8"),
-        headers={"Content-Type": "application/json"}
+    response = _ollama_generate(
+        prompt,
+        stream=False,
+        output_format="json",
     )
 
-    response = urllib.request.urlopen(request)
-
     result = json.loads(response.read().decode("utf-8"))
-
     return result["response"]

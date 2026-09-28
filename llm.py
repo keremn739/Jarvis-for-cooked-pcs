@@ -87,150 +87,296 @@ or look like speech-to-text output.
 
 You MUST preserve the order of the user's requested actions.
 
-Allowed step types:
+==================================================
+ALLOWED STEP TYPES
+==================================================
 
-- MEMORY
-  Use when the user is asking about information stored in the user's memory.
-  The content field MUST contain the exact part of the user's request
-  that should be answered using memory.
-
-- LOCAL
-  Use when the local LLM should answer an informational, conversational,
-  educational, or programming question.
-
-- CLOUD
-  Use when the request requires cloud capabilities or external/current
-  information.
+There are exactly four valid step types:
 
 - TOOL
-  Use when the assistant must actually perform one of the allowed tools.
-
+- CLOUD
+- LOCAL
 - BLOCKED
-  Use when a request should not be executed.
+
+MEMORY is NOT a valid top-level step type.
+
+Do NOT output "NOT TOOL".
+Do NOT output any other step type.
+
+==================================================
+1. TOOL
+==================================================
+
+TOOL means Jarvis must actually perform an available computer action.
+
+Use TOOL only when the user explicitly asks Jarvis to perform the action.
+
+Examples:
+
+"Open Chrome."
+→ TOOL / OPEN_APP / chrome
+
+"Can you open Chrome for me?"
+→ TOOL / OPEN_APP / chrome
+
+"Start the calculator."
+→ TOOL / OPEN_APP / calculator
+
+"How do I open Chrome?"
+→ NOT TOOL
+
+"How can I open Chrome?"
+→ NOT TOOL
+
+"Tell me how to launch Chrome."
+→ NOT TOOL
+
+Asking how to perform an action is NOT the same as asking
+Jarvis to perform the action.
+
+Do NOT use OPEN_APP merely because an application name is mentioned.
 
 Allowed tools:
 
 - GET_TIME
 - OPEN_APP
 
-TOOL rules:
+GET_TIME:
+Use only when the user explicitly asks for the current time.
 
-- GET_TIME means the user explicitly wants to know the current time.
-- OPEN_APP means the user explicitly wants the assistant to open an application.
-- OPEN_APP target must contain the application name.
-- Never create shell commands.
-- Never create arbitrary operating-system commands.
+OPEN_APP:
+Use only when the user explicitly asks Jarvis to open,
+launch, or start an application.
 
-IMPORTANT SEMANTIC DISTINCTIONS:
+Never create shell commands.
+Never create arbitrary operating-system commands.
 
-"chrome aç"
+Examples:
+
+"Chrome hakkında bilgi ver"
+→ NOT TOOL
+
+"Chrome nasıl açılır"
+→ NOT TOOL
+
+"Chrome'u aç"
 → TOOL / OPEN_APP / chrome
-
-"chrome nasıl açılır"
-→ LOCAL
-
-"chrome aç sonra python dictionary nedir"
-→
-1. TOOL / OPEN_APP / chrome
-2. LOCAL / python dictionary nedir
 
 "saat kaç"
 → TOOL / GET_TIME
 
-"ben hangi üniversitede okuyorum"
-→ MEMORY
+==================================================
+2. LOCAL
+==================================================
 
-"python dictionary nedir"
-→ LOCAL
+LOCAL is the fallback route.
 
-"bugün hava nasıl"
+Use LOCAL when the request does not require TOOL or CLOUD handling.
+
+Do NOT define LOCAL as "anything Gemma can answer."
+
+The local model should be used when local handling is sufficient,
+preferable, private, lightweight, or when cloud capability is not needed.
+
+LOCAL has a memory field:
+
+- memory=true
+- memory=false
+
+==================================================
+LOCAL + MEMORY
+==================================================
+
+Use LOCAL with memory=true when answering the request requires
+information specifically about the user that may exist in Jarvis's
+stored memory.
+
+Examples:
+
+"What university do I attend?"
+→ LOCAL + memory=true
+
+"What GPU do I have?"
+→ LOCAL + memory=true
+
+"What degree am I studying?"
+→ LOCAL + memory=true
+
+"What operating system am I using?"
+→ LOCAL + memory=true
+
+"Hangi üniversitede okuyorum?"
+→ LOCAL + memory=true
+
+"Ekran kartım ne?"
+→ LOCAL + memory=true
+
+"What is a GPU?"
+→ LOCAL + memory=false
+
+"What is a university?"
+→ LOCAL + memory=false
+
+"What is computer engineering?"
+→ LOCAL + memory=false
+
+"Üniversite nedir?"
+→ LOCAL + memory=false
+
+"Ekran kartı nedir?"
+→ LOCAL + memory=false
+
+IMPORTANT:
+
+If memory=true, the step MUST be LOCAL.
+
+Never output CLOUD with memory=true.
+
+Personal information must remain in the local memory path.
+
+==================================================
+3. CLOUD
+==================================================
+
+CLOUD means that a cloud model is meaningfully preferable
+for answering the request.
+
+CLOUD is intentionally broad.
+
+Use CLOUD for:
+
+- current information
+- latest information
+- news
+- prices
+- weather
+- public/external facts
+- general knowledge where factual quality matters
+- teaching
+- explanations
+- programming help
+- debugging
+- complex reasoning
+- research
+- writing or generation where a stronger model is useful
+- requests explicitly directed to Gemini or another cloud AI
+
+Examples:
+
+"What is Bitcoin?"
 → CLOUD
 
-"python dictionary nedir ve nasıl kullanılır"
-→ LOCAL
-
-Do NOT create extra steps.
-
-Do NOT invent actions that the user did not request.
-
-Do NOT use GET_TIME unless the user explicitly asks about the time.
-
-Do NOT use OPEN_APP merely because an application name is mentioned.
-
-For example:
-
-"Chrome'da Python öğrenmek için ne yapmalıyım?"
-→ LOCAL
-
-"Chrome'u aç"
-→ TOOL / OPEN_APP / chrome
-
-"Chrome hakkında bilgi ver"
-→ LOCAL
-
-The action and type fields MUST agree.
-
-Valid examples:
-
-TOOL + GET_TIME
-TOOL + OPEN_APP
-
-Invalid examples:
-
-LOCAL + OPEN_APP
-LOCAL + GET_TIME
-CLOUD + OPEN_APP
-CLOUD + GET_TIME
-MEMORY + OPEN_APP
-MEMORY + GET_TIME
-
-IMPORTANT TOOL SEMANTICS:
-
-OPEN_APP is ONLY for explicitly opening or launching an application.
-
-Mentioning an application name does NOT mean OPEN_APP.
-
-"Geminiye gönder"
-→ This is NOT OPEN_APP.
-
-"Gemini'ye sor"
-→ This is NOT OPEN_APP.
-
-"Gemini'ye gönder"
-→ CLOUD if the request is otherwise safe.
-
-"Gemini'yi aç"
-→ TOOL / OPEN_APP / Gemini
-
-"Chrome'u aç"
-→ TOOL / OPEN_APP / chrome
-
-"Chrome hakkında bilgi ver"
-→ LOCAL
-
-"Gemini'ye bu metni gönder"
+"What is the current Bitcoin price?"
 → CLOUD
 
-Never use OPEN_APP merely because an application name appears in the request.
+"What is Python?"
+→ CLOUD
 
-For LOCAL, MEMORY and CLOUD steps:
+"What is the latest version of Python?"
+→ CLOUD
 
-- action must be null
-- target must be null unless explicitly needed by the schema
-- content MUST contain the exact user request that this step should answer
-- Do not leave content null for LOCAL, MEMORY or CLOUD steps.
-- For multi-intent requests, each step's content must contain only the
-  corresponding part of the user's request.
+"Explain Python dictionaries with examples."
+→ CLOUD
 
-For TOOL steps:
-- action must be one of the allowed tools
-- target should contain the tool target when needed
-- content can be null
+"Help me understand pointers in C++."
+→ CLOUD
 
-For BLOCKED steps:
-- action must be null
-- target must be null
-- reason should explain why the step is blocked
+"What are the major cities in Türkiye?"
+→ CLOUD
+
+"What is the capital of Türkiye?"
+→ CLOUD
+
+"What's the weather today?"
+→ CLOUD
+
+"What's the latest AI news?"
+→ CLOUD
+
+"Ask Gemini what Python decorators are."
+→ CLOUD
+
+"Send this question to Gemini."
+→ CLOUD
+
+CLOUD must always have:
+
+- action = null
+- target = null
+- memory = false
+- content = the exact request for that step
+
+==================================================
+4. BLOCKED
+==================================================
+
+Use BLOCKED when the request should not be executed.
+
+BLOCKED must have:
+
+- action = null
+- target = null
+- memory = false
+- reason explaining why it is blocked
+
+==================================================
+ROUTING PRIORITY
+==================================================
+
+Use this reasoning order:
+
+1. If the user explicitly asks Jarvis to perform an available action:
+   → TOOL
+
+2. If answering requires personal information about the user:
+   → LOCAL + memory=true
+
+3. If cloud intelligence or external information is meaningfully
+   preferable:
+   → CLOUD
+
+4. Otherwise:
+   → LOCAL + memory=false
+
+The memory rule has priority over CLOUD.
+
+Never route a personal-memory request to CLOUD.
+
+==================================================
+MULTI-INTENT REQUESTS
+==================================================
+
+Preserve the user's requested order.
+
+Example:
+
+"Open Chrome and explain Python dictionaries."
+
+→ TOOL / OPEN_APP / chrome
+→ CLOUD / explain Python dictionaries
+
+Example:
+
+"Tell me what GPU I have and explain what a GPU is."
+
+→ LOCAL + memory=true / What GPU I have
+→ CLOUD / What a GPU is
+
+Example:
+
+"Open Chrome and tell me what the weather is."
+
+→ TOOL / OPEN_APP / chrome
+→ CLOUD / what the weather is
+
+Do not create extra steps.
+
+Each step's content must contain only the corresponding
+part of the user's request.
+
+==================================================
+OUTPUT RULES
+==================================================
 
 Return ONLY valid JSON.
 
@@ -239,14 +385,46 @@ Return exactly this structure:
 {{
   "steps": [
     {{
-      "type": "MEMORY|LOCAL|CLOUD|TOOL|BLOCKED",
+      "type": "TOOL|CLOUD|LOCAL|BLOCKED",
       "action": null,
       "target": null,
       "content": null,
+      "memory": false,
       "reason": null
     }}
   ]
 }}
+
+For TOOL:
+- action must be GET_TIME or OPEN_APP
+- target is required for OPEN_APP
+- memory must be false
+- content may be null
+
+For LOCAL:
+- action must be null
+- target must be null
+- content must contain the exact request
+- memory must be true or false
+- memory=true means the answer requires personal stored information
+
+For CLOUD:
+- action must be null
+- target must be null
+- content must contain the exact request
+- memory MUST be false
+
+For BLOCKED:
+- action must be null
+- target must be null
+- memory must be false
+- reason should explain why it is blocked
+
+NEVER output:
+
+- MEMORY as a step type
+- NOT TOOL as a step type
+- any other invented type
 
 User message:
 {message}
@@ -271,4 +449,3 @@ User message:
     result = json.loads(response.read().decode("utf-8"))
 
     return result["response"]
-

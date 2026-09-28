@@ -124,7 +124,10 @@ while True:
 
                     print("JARVIS [Cloud]: ", end="")
 
-                    print(ask_gemini(query))
+                    try:
+                        print(ask_gemini(query))
+                    except Exception as error:
+                        print(f"Cloud service unavailable: {error}")
 
                 elif step_type == "BLOCKED":
 

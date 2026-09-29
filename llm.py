@@ -29,7 +29,6 @@ def _ollama_generate(prompt, *, stream=False, output_format=None):
 
 
 def ask_llm(message):
-
     start = time.time()
     response = _ollama_generate(message, stream=True)
 
@@ -69,7 +68,6 @@ def ask_llm(message):
 
 
 def ask_llm_json(message):
-
     response = _ollama_generate(
         message,
         stream=False,
@@ -77,12 +75,13 @@ def ask_llm_json(message):
     )
 
     result = json.loads(response.read().decode("utf-8"))
+
     return result["response"]
 
 
 def ask_router(message):
 
-
+    prompt = f"""
 You are the routing and planning brain of a personal AI assistant.
 
 Analyze the user's request semantically and create an ordered execution plan.
@@ -440,6 +439,8 @@ NEVER output:
 
 User message:
 {message}
+"""
+
     response = _ollama_generate(
         prompt,
         stream=False,
@@ -447,4 +448,5 @@ User message:
     )
 
     result = json.loads(response.read().decode("utf-8"))
+
     return result["response"]

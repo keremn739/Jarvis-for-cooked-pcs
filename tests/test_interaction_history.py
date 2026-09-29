@@ -93,7 +93,7 @@ class InteractionHistoryTests(unittest.TestCase):
         source = Path(__file__).resolve().parents[1] / "main.py"
         with patch("builtins.input", side_effect=["hello", "exit"]), \
              patch("builtins.print", side_effect=lambda *args, **kwargs: events.append("print")), \
-             patch("router.route_message", side_effect=lambda _message: events.append("route") or {"steps": []}), \
+             patch("router.route_online", side_effect=lambda _message: events.append("route") or {"steps": []}), \
              patch("interaction_history.enqueue_interaction", side_effect=lambda _message: events.append("log")), \
              patch("interaction_history.close_interaction_history", side_effect=lambda: events.append("close")):
             runpy.run_path(str(source), run_name="__main__")

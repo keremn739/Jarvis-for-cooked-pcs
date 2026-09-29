@@ -11,7 +11,7 @@ def ask_gemini(message):
 
     url = (
         "https://generativelanguage.googleapis.com/v1beta/"
-        "models/gemini-3.5-flash:generateContent"
+        "models/gemini-3.8-flash:generateContent"
     )
 
     data = {

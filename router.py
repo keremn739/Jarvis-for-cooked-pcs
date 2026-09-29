@@ -1,304 +1,189 @@
+"""Online request routing.
+
+This module intentionally has no dependency on memory, privacy, or database
+code. Local mode is managed by :mod:`mode`; online requests can only produce
+TOOL and CLOUD steps.
+"""
+
 import json
+import re
 
 from llm import ask_router
-from privacy import find_private_content
 
 
-VALID_TYPES = {
-    "LOCAL",
-    "CLOUD",
-    "TOOL",
-    "BLOCKED"
-}
+VALID_TOOLS = {"GET_TIME", "OPEN_APP"}
+VALID_APPS = {"chrome", "notepad", "calculator"}
 
-VALID_TOOLS = {
-    "GET_TIME",
-    "OPEN_APP"
-}
+LOCAL_MODE_COMMANDS = (
+    "go into local mode",
+    "enter local mode",
+    "switch to local mode",
+    "activate local mode",
+    "yerel moda geç",
+    "yerel moda gir",
+)
 
-VALID_APPS = {
-    "chrome",
-    "notepad",
-    "calculator"
-}
-
-
-def is_instructional_open_app_request(message):
-    text = message.lower().strip()
-
-    instructional_markers = (
-        "how ",
-        "how do ",
-        "how can ",
-        "tell me how ",
-        "nasıl ",
-    )
-
-    return any(marker in text for marker in instructional_markers)
+ONLINE_MODE_COMMANDS = (
+    "go into online mode",
+    "return to online mode",
+    "switch to online mode",
+    "back to online mode",
+    "çevrimiçi moda geç",
+    "normal moda dön",
+)
 
 
-def validate_step(step, message):
+def _normalized_command(message):
+    text = str(message).strip().lower()
+    text = re.sub(r"^[\s,;.!?]*(?:jarvis\s*[, :]\s*)?", "", text)
+    return re.sub(r"[\s.!?]+$", "", text)
 
-    if not isinstance(step, dict):
-        return None
 
-    raw_step_type = str(step.get("type", "")).strip().upper()
+def requested_mode(message):
+    """Return an explicitly requested mode, or ``None``."""
+    text = _normalized_command(message)
+    if text in LOCAL_MODE_COMMANDS:
+        return "LOCAL"
+    if text in ONLINE_MODE_COMMANDS:
+        return "ONLINE"
+    return None
 
-    # Gemma sometimes combines the LOCAL route and memory flag into the
-    # type string even though the schema defines memory as a separate field.
-    # Normalize that specific formatting error instead of rejecting an
-    # otherwise correct personal-memory decision.
-    if raw_step_type in {
-        "LOCAL + MEMORY=TRUE",
-        "LOCAL+MEMORY=TRUE",
-    }:
-        step_type = "LOCAL"
-        step["memory"] = True
-    else:
-        step_type = raw_step_type
 
-    action = step.get("action")
-    target = step.get("target")
-    content = step.get("content")
-    reason = step.get("reason")
-    memory = bool(step.get("memory", False))
-
-    if step_type not in VALID_TYPES:
-        return None
-
-    if action is not None:
-        action = str(action).upper()
-
-    if target is not None:
-        target = str(target)
-
-    if content is not None:
-        content = str(content)
-
-    if reason is not None:
-        reason = str(reason)
-
-    # -------------------------------------------------
-    # TOOL validation
-    # -------------------------------------------------
-
-    if step_type == "TOOL":
-
-        if action not in VALID_TOOLS:
-            return None
-
-        if memory:
-            return None
-
-        if action == "GET_TIME":
-
-            if target is not None:
-                return None
-
-        elif action == "OPEN_APP":
-
-            if not target:
-                return None
-
-            if target.lower() not in VALID_APPS:
-                return None
-
-            if is_instructional_open_app_request(message):
-                return {
-                    "type": "LOCAL",
-                    "action": None,
-                    "target": None,
-                    "content": message,
-                    "memory": False,
-                    "reason": "Instructional request, not an execution request."
-                }
-
-            target = target.lower()
-
-    # -------------------------------------------------
-    # LOCAL validation
-    # -------------------------------------------------
-
-    if step_type == "LOCAL":
-
-        if action is not None:
-            return None
-
-        if target is not None:
-            return None
-
-        if not content:
-            return None
-
-        # LOCAL is the only route allowed to use memory.
-        if memory:
-            memory = True
-
-    # -------------------------------------------------
-    # CLOUD validation
-    # -------------------------------------------------
-
-    if step_type == "CLOUD":
-
-        if action is not None:
-            return None
-
-        if target is not None:
-            return None
-
-        if not content:
-            return None
-
-        # Critical privacy invariant:
-        #
-        # CLOUD + memory=True is never allowed.
-        #
-        # If Gemma accidentally combines them, force the request
-        # back onto the local path.
-        if memory:
-            return {
-                "type": "LOCAL",
-                "action": None,
-                "target": None,
-                "content": content,
-                "memory": True,
-                "reason": "Personal memory request kept local."
-            }
-
-    # -------------------------------------------------
-    # BLOCKED validation
-    # -------------------------------------------------
-
-    if step_type == "BLOCKED":
-
-        if action is not None:
-            return None
-
-        if target is not None:
-            return None
-
-        if memory:
-            return None
-
-    # -------------------------------------------------
-    # Privacy barrier
-    # -------------------------------------------------
-
-    if step_type in {"LOCAL", "CLOUD"} and content:
-
-        private_findings = find_private_content(content)
-
-        if private_findings:
-
-            return {
-                "type": "BLOCKED",
-                "action": None,
-                "target": None,
-                "content": None,
-                "memory": False,
-                "reason": "Sensitive information request."
-            }
-
+def _step(step_type, content, action=None, target=None):
     return {
         "type": step_type,
         "action": action,
         "target": target,
         "content": content,
-        "memory": memory,
-        "reason": reason
+        "memory": False,
+        "reason": None,
     }
 
 
-def route_message(message):
+def _tool_step(action, target=None):
+    return {
+        "type": "TOOL",
+        "action": action,
+        "target": target,
+        "content": None,
+        "memory": False,
+        "reason": None,
+    }
+
+
+def _is_informational_open_app_request(message):
+    text = message.lower().strip()
+    # "How do I open Chrome?" asks for instructions. Do not use a blanket
+    # "how" check: "How is Chrome performing? Open it" contains an action.
+    return bool(re.match(r"^(?:how\s+(?:do|can|could|would)\s+i|tell\s+me\s+how\s+to|nasıl)\b", text))
+
+
+def match_tool(message):
+    """Recognize high-confidence, explicitly requested supported actions."""
+    text = message.lower().strip()
+    if re.search(r"\b(?:what time is it|current time|tell me the time|time right now)\b", text) or \
+            re.search(r"(?:saat kaç|şu an saat kaç)", text):
+        return _tool_step("GET_TIME")
+
+    if _is_informational_open_app_request(text):
+        return None
+
+    app_patterns = (
+        ("chrome", r"(?:google\s+)?chrome"),
+        ("notepad", r"notepad"),
+        ("calculator", r"(?:the\s+)?calculator|hesap makinesi(?:ni)?"),
+    )
+    action_words = r"\b(?:open|launch|start|run)\b|(?:aç|başlat)"
+    if not re.search(action_words, text):
+        return None
+    for app, pattern in app_patterns:
+        if re.search(pattern, text):
+            return _tool_step("OPEN_APP", app)
+    return None
+
+
+def _split_ordered_intents(message):
+    """Split common two-part requests while preserving the written order."""
+    parts = re.split(r"\s*,\s*then\s+|\s+then\s+|\s+and\s+", message, maxsplit=1, flags=re.IGNORECASE)
+    if len(parts) != 2:
+        return None
+    left, right = (part.strip(" ,.!?") for part in parts)
+    if not left or not right:
+        return None
+    left_tool, right_tool = match_tool(left), match_tool(right)
+    if bool(left_tool) == bool(right_tool):
+        return None
+    steps = []
+    for part, tool_step in ((left, left_tool), (right, right_tool)):
+        steps.append(tool_step if tool_step else _step("CLOUD", part))
+    return steps
+
+
+def _validate_online_step(step):
+    if not isinstance(step, dict):
+        return None
+    step_type = str(step.get("type", "")).strip().upper()
+    if step_type == "TOOL":
+        action = str(step.get("action", "")).strip().upper()
+        target = step.get("target")
+        if action not in VALID_TOOLS or bool(step.get("memory", False)):
+            return None
+        if action == "GET_TIME":
+            if target is not None:
+                return None
+        elif not target or str(target).lower() not in VALID_APPS:
+            return None
+        return _tool_step(action, str(target).lower() if target is not None else None)
+    if step_type == "CLOUD" and not step.get("memory", False):
+        content = step.get("content")
+        if content:
+            return _step("CLOUD", str(content))
+    return None
+
+
+def route_online(message):
+    """Route online requests to ordered TOOL/CLOUD steps only."""
+    if requested_mode(message) == "LOCAL":
+        return {"steps": [], "switch_to": "LOCAL"}
+
+    split_steps = _split_ordered_intents(message)
+    if split_steps:
+        return {"steps": split_steps}
+
+    direct_tool = match_tool(message)
+    if direct_tool:
+        return {"steps": [direct_tool]}
 
     try:
-
         raw_result = ask_router(message)
-
         plan = json.loads(raw_result)
+        raw_steps = plan.get("steps") if isinstance(plan, dict) else None
+        if isinstance(raw_steps, list) and raw_steps:
+            steps = [_validate_online_step(step) for step in raw_steps]
+            steps = [step for step in steps if step]
+            if steps:
+                return {"steps": steps}
+    except (json.JSONDecodeError, TypeError, ValueError, OSError, TimeoutError):
+        pass
 
-    except (json.JSONDecodeError, TypeError, ValueError):
+    # Default authority for ordinary questions belongs to the online mode.
+    return {"steps": [_step("CLOUD", message)]}
 
-        return {
-            "steps": [{
-                "type": "LOCAL",
-                "action": None,
-                "target": None,
-                "content": message,
-                "memory": False,
-                "reason": "Invalid router output."
-            }]
-        }
 
-    if not isinstance(plan, dict):
+def route_local(message):
+    """Route LOCAL mode to MEMORY, TOOL, or local Gemma FALLBACK."""
+    if requested_mode(message) == "ONLINE":
+        return {"steps": [], "switch_to": "ONLINE"}
 
-        return {
-            "steps": [{
-                "type": "LOCAL",
-                "action": None,
-                "target": None,
-                "content": message,
-                "memory": False,
-                "reason": "Invalid router output."
-            }]
-        }
+    tool_step = match_tool(message)
+    if tool_step:
+        return {"steps": [tool_step]}
 
-    raw_steps = plan.get("steps")
-
-    if not isinstance(raw_steps, list) or not raw_steps:
-
-        return {
-            "steps": [{
-                "type": "LOCAL",
-                "action": None,
-                "target": None,
-                "content": message,
-                "memory": False,
-                "reason": "No valid plan returned."
-            }]
-        }
-
-    steps = []
-
-    for step in raw_steps:
-
-        validated_step = validate_step(step, message)
-
-        if validated_step:
-            steps.append(validated_step)
-
-    # -------------------------------------------------
-    # Raw-message privacy safety net
-    # -------------------------------------------------
-
-    private_findings = find_private_content(message)
-
-    if private_findings:
-
-        steps = [{
-            "type": "BLOCKED",
-            "action": None,
-            "target": None,
-            "content": None,
-            "memory": False,
-            "reason": "Sensitive information request."
-        }]
-
-    # -------------------------------------------------
-    # Final fallback
-    # -------------------------------------------------
-
-    if not steps:
-
-        steps.append({
-            "type": "LOCAL",
-            "action": None,
-            "target": None,
-            "content": message,
-            "memory": False,
-            "reason": "No valid steps."
-        })
-
-    return {
-        "steps": steps
-    }
+    text = message.lower()
+    asks_about_user = bool(re.search(
+        r"\b(my|me|i have|i use|i am|i'm|what do you remember|what do i|what is my)\b|"
+        r"(benim|bana|ben hangi|ekran kartım|hangi bilgisayar|ne hatırlıyorsun)",
+        text,
+    ))
+    route_type = "MEMORY" if asks_about_user else "FALLBACK"
+    return {"steps": [{"type": route_type, "content": message}]}

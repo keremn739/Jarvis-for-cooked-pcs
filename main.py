@@ -8,9 +8,13 @@ from memory import (
     get_relevant_memories,
     build_memory_prompt
 )
-from router import route_message
+from mode import Mode, ModeState
+from router import route_local, route_online
 from tools import execute_tool
 from interaction_history import enqueue_interaction, close_interaction_history
+
+
+mode_state = ModeState()
 
 
 while True:
@@ -29,7 +33,17 @@ while True:
         break
 
     try:
-        if command.startswith("remember "):
+        new_mode = mode_state.apply_command(message)
+        if new_mode == Mode.LOCAL:
+            print("JARVIS: Local mode is on.")
+
+        elif new_mode == Mode.ONLINE:
+            print("JARVIS: Online mode is on.")
+
+        elif (command.startswith(("remember ", "what do you remember", "find ", "forget ")) or command == "forget everything") and mode_state.mode != Mode.LOCAL:
+            print("JARVIS: Enter local mode first to use private memory.")
+
+        elif command.startswith("remember "):
             content = message.strip()[9:]
 
             try:
@@ -73,17 +87,17 @@ while True:
 
         else:
 
-            plan = route_message(message)
+            plan = route_online(message) if mode_state.mode == Mode.ONLINE else route_local(message)
 
             for step in plan["steps"]:
 
                 step_type = step["type"]
 
-                if step_type == "LOCAL":
+                if step_type in {"MEMORY", "FALLBACK"}:
 
                     query = step["content"] or message
 
-                    if step.get("memory", False):
+                    if step_type == "MEMORY":
 
                         memories = get_relevant_memories(query)
 
@@ -133,6 +147,10 @@ while True:
                         print(f"JARVIS: {result}")
 
                 elif step_type == "CLOUD":
+
+                    if mode_state.mode == Mode.LOCAL:
+                        # Local mode has no cloud route by design.
+                        continue
 
                     query = step["content"] or message
 

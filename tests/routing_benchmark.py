@@ -1,6 +1,6 @@
 """Baseline benchmark for JARVIS's current semantic router.
 
-This runner calls ``route_message`` and deliberately never calls the execution
+This runner calls ``route_online`` and deliberately never calls the execution
 layer. It compares normalized structured plans, rather than raw JSON strings.
 """
 
@@ -15,7 +15,7 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from router import route_message
+from router import route_online
 
 
 def tool(action, target=None):
@@ -104,7 +104,7 @@ def run_benchmark():
     for case_id, category, message, expected in CASES:
         category_totals[category]["total"] += 1
         try:
-            actual_plan = route_message(message)
+            actual_plan = route_online(message)
             actual = normalize_plan(actual_plan)
             error = None
         except Exception as exception:  # Record an unavailable router as a failure.

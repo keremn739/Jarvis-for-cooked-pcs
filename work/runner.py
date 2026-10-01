@@ -13,9 +13,19 @@ from .providers.codex import CodexProvider
 class WorkRunner:
     """Execute provider turns while keeping JARVIS state authoritative."""
 
-    def __init__(self, manager: Optional[WorkManager] = None, provider_factory: Callable[..., CodexProvider] = CodexProvider):
+    DEFAULT_ROTATION_TURNS = 8
+
+    def __init__(
+        self,
+        manager: Optional[WorkManager] = None,
+        provider_factory: Callable[..., CodexProvider] = CodexProvider,
+        rotation_turns: int = DEFAULT_ROTATION_TURNS,
+    ):
         self.manager = manager or WorkManager()
         self.provider_factory = provider_factory
+        if rotation_turns < 1:
+            raise ValueError("rotation_turns must be at least 1")
+        self.rotation_turns = rotation_turns
 
     def run_codex_turn(self, run_id: str, message: str, *, cwd=None):
         run = self.manager.get_run(run_id)
@@ -48,6 +58,11 @@ class WorkRunner:
             for notification in provider.send(prompt, cwd=cwd):
                 self._record_provider_event(run_id, session["id"], notification)
 
+            turns += 1
+            self.manager.update_session_metadata(
+                session["id"],
+                {"turn_count": turns, "handover_summary": handover},
+            )
             self.manager.complete_run(run_id)
             self.manager.transition_session(session["id"], "COMPLETED")
             return self.manager.get_run(run_id)
@@ -59,6 +74,46 @@ class WorkRunner:
                 raise
         finally:
             provider.stop()
+
+    def _create_handover(self, provider, run_id, session_id, project_id, cwd):
+        request = (
+            "Create a concise handover summary for another coding-agent session. "
+            "Include current objective, work completed, files changed, important "
+            "decisions, current implementation state, known issues, tests/results, "
+            "and exact next steps. Do not invent anything. Return only the summary."
+        )
+        parts = []
+        for notification in provider.send(request, cwd=cwd):
+            self._record_provider_event(run_id, session_id, notification)
+            text = self._extract_completed_text(notification)
+            if text:
+                parts.append(text)
+        summary = "\n".join(parts).strip()
+        if not summary:
+            raise RuntimeError("Codex produced no handover summary")
+        self.manager.create_handover_artifact(
+            project_id, run_id, summary, {"source_session_id": session_id}
+        )
+        self.manager.record_event(
+            run_id, "HANDOVER_CREATED",
+            {"source_session_id": session_id, "summary": summary}, session_id
+        )
+        return summary
+
+    @staticmethod
+    def _extract_completed_text(notification):
+        if notification.get("method") != "item/agentMessage/completed":
+            return ""
+        item = notification.get("params", {}).get("item", {})
+        if isinstance(item.get("text"), str):
+            return item["text"]
+        content = item.get("content")
+        if isinstance(content, list):
+            return "\n".join(
+                part["text"] for part in content
+                if isinstance(part, dict) and isinstance(part.get("text"), str)
+            )
+        return ""
 
     def _record_provider_event(self, run_id, session_id, notification):
         method = notification.get("method") if isinstance(notification, dict) else None

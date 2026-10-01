@@ -37,6 +37,18 @@ class WorkManager:
     def transition_session(self, session_id, status):
         return lifecycle.transition_session(session_id, status)
 
+    def update_session_metadata(self, session_id, metadata):
+        return store.update_agent_session(session_id, metadata=metadata)
+
+    def create_handover_artifact(self, project_id, run_id, content, metadata=None):
+        return store.create_artifact(
+            project_id,
+            "OTHER",
+            "codex-handover",
+            run_id=run_id,
+            metadata={"kind": "HANDOVER", "content": content, **(metadata or {})},
+        )
+
     def record_event(self, run_id, event_type, payload=None, session_id=None):
         return store.append_event(run_id, event_type, payload, session_id)
 

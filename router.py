@@ -5,14 +5,11 @@ code. Local mode is managed by :mod:`mode`; online requests can produce TOOL,
 CLOUD, or high-confidence WORK steps.
 """
 
-import json
 import re
 
-from llm import ask_router
+from api.groq_router import route_with_groq
+from tools import TOOL_REGISTRY
 
-
-VALID_TOOLS = {"GET_TIME", "OPEN_APP"}
-VALID_APPS = {"chrome", "notepad", "calculator"}
 
 LOCAL_MODE_COMMANDS = (
     "go into local mode",
@@ -153,27 +150,66 @@ def _split_ordered_intents(message):
     return steps
 
 
-def _validate_online_step(step):
+def _is_original_intent_excerpt(content, message):
+    """Reject WORK/CLOUD content containing text absent from the user request."""
+    content_tokens = re.findall(r"\w+", content.casefold())
+    message_tokens = re.findall(r"\w+", message.casefold())
+    if not content_tokens or len(content_tokens) > len(message_tokens):
+        return False
+    width = len(content_tokens)
+    return any(
+        message_tokens[index : index + width] == content_tokens
+        for index in range(len(message_tokens) - width + 1)
+    )
+
+
+def _validate_online_step(step, *, fallback_content=None):
     if not isinstance(step, dict):
         return None
     step_type = str(step.get("type", "")).strip().upper()
     if step_type == "TOOL":
+        legacy_keys = {"type", "action", "target", "content"}
+        schema_keys = legacy_keys | {"memory", "reason"}
+        if set(step) not in (legacy_keys, schema_keys):
+            return None
+        if "memory" in step and step["memory"] is not False:
+            return None
+        if "reason" in step and step["reason"] is not None and not isinstance(step["reason"], str):
+            return None
+        content = step.get("content")
+        if content is not None:
+            return None
         action = str(step.get("action", "")).strip().upper()
         target = step.get("target")
-        if action not in VALID_TOOLS or bool(step.get("memory", False)):
+        definition = TOOL_REGISTRY.get(action)
+        if definition is None:
             return None
-        if action == "GET_TIME":
+        if not definition["accepts_target"]:
             if target is not None:
                 return None
-        elif not target or str(target).lower() not in VALID_APPS:
+            normalized_target = None
+        else:
+            if not isinstance(target, str) or target.lower() not in definition["targets"]:
+                return None
+            normalized_target = target.lower()
+        return _tool_step(action, normalized_target)
+    if step_type in {"WORK", "CLOUD"}:
+        if set(step) != {"type", "action", "target", "content"}:
             return None
-        return _tool_step(action, str(target).lower() if target is not None else None)
-    if step_type == "WORK" and not step.get("memory", False) and step.get("content"):
-        return _work_step(str(step["content"]))
-    if step_type == "CLOUD" and not step.get("memory", False):
         content = step.get("content")
-        if content:
-            return _step("CLOUD", str(content))
+        if content is not None and not isinstance(content, str):
+            return None
+        if step.get("action") is not None or step.get("target") is not None:
+            return None
+        if (
+            isinstance(content, str)
+            and content.strip()
+            and fallback_content
+            and _is_original_intent_excerpt(content, fallback_content)
+        ):
+            if step_type == "WORK":
+                return _work_step(content)
+            return _step("CLOUD", content)
     return None
 
 
@@ -182,28 +218,22 @@ def route_online(message):
     if requested_mode(message) == "LOCAL":
         return {"steps": [], "switch_to": "LOCAL"}
 
-    work_step = match_work(message)
-    if work_step:
-        return {"steps": [work_step]}
-
-    split_steps = _split_ordered_intents(message)
-    if split_steps:
-        return {"steps": split_steps}
-
-    direct_tool = match_tool(message)
-    if direct_tool:
-        return {"steps": [direct_tool]}
-
     try:
-        raw_result = ask_router(message)
-        plan = json.loads(raw_result)
+        plan = route_with_groq(message)
         raw_steps = plan.get("steps") if isinstance(plan, dict) else None
-        if isinstance(raw_steps, list) and raw_steps:
-            steps = [_validate_online_step(step) for step in raw_steps]
-            steps = [step for step in steps if step]
-            if steps:
+        if (
+            isinstance(plan, dict)
+            and set(plan) == {"steps"}
+            and isinstance(raw_steps, list)
+            and raw_steps
+        ):
+            steps = [
+                _validate_online_step(step, fallback_content=message)
+                for step in raw_steps
+            ]
+            if all(step is not None for step in steps):
                 return {"steps": steps}
-    except (json.JSONDecodeError, TypeError, ValueError, OSError, TimeoutError):
+    except Exception:
         pass
 
     return {"steps": [_step("CLOUD", message)]}

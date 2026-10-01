@@ -63,6 +63,7 @@ class WorkManagerTests(unittest.TestCase):
         project = self.manager.create_project("Test Project")
         task = self.manager.create_task(project["id"], "Failing task")
         run = self.manager.create_run(task["id"])
+        self.manager.start_run(run["id"])
 
         failed = self.manager.fail_run(run["id"], "tests failed")
 

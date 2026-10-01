@@ -1,0 +1,7 @@
+sounddevice
+numpy
+scipy
+groq
+edge-tts
+silero-vad
+torch

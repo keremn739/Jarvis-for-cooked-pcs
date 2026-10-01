@@ -23,10 +23,10 @@ CHANNELS = 1
 CHUNK_SAMPLES = 1536
 VAD_CHUNK_SAMPLES = 512
 
-VAD_THRESHOLD = 0.5
+VAD_THRESHOLD = 0.35
 MIN_SILENCE_MS = 700
 SPEECH_PAD_MS = 30
-PRE_ROLL_MS = 300
+PRE_ROLL_MS = 1000
 
 STT_MODEL = "whisper-large-v3-turbo"
 TTS_VOICE = "en-US-AndrewNeural"
@@ -123,6 +123,7 @@ def listen():
     )
 
     pre_roll = []
+    listening_started = time.perf_counter()
 
     def callback(indata, frames, time_info, status):
         nonlocal recording, finished
@@ -164,7 +165,14 @@ def listen():
 
             if result and "start" in result:
                 if not recording:
-                    print(">>> SPEECH START")
+                    elapsed = time.perf_counter() - listening_started
+                    included_preroll_ms = sum(
+                        len(audio) for audio in pre_roll
+                    ) * 1000 / VAD_RATE
+                    print(
+                        f">>> SPEECH START (+{elapsed:.2f}s; "
+                        f"pre-roll included: {included_preroll_ms:.0f} ms)"
+                    )
 
                     recording = True
 

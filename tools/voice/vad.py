@@ -1,3 +1,5 @@
+from time import perf_counter
+
 import sounddevice as sd
 import numpy as np
 from scipy.signal import resample_poly
@@ -10,7 +12,7 @@ INPUT_RATE = 48000
 VAD_RATE = 16000
 CHUNK = 1536
 
-VAD_THRESHOLD = 0.5
+VAD_THRESHOLD = 0.35
 MIN_SILENCE_MS = 700
 SPEECH_PAD_MS = 30
 
@@ -40,6 +42,8 @@ print('  "Merhaba Jarvis" -> short pause -> "what is the time?"')
 print("  then a longer pause and another sentence.")
 print()
 
+listening_started = perf_counter()
+
 
 def callback(indata, frames, time, status):
     if status:
@@ -58,7 +62,8 @@ def callback(indata, frames, time, status):
 
     if result is not None:
         if "start" in result:
-            print(">>> SPEECH START")
+            elapsed = perf_counter() - listening_started
+            print(f">>> SPEECH START (+{elapsed:.2f}s; pre-roll included: 0 ms)")
 
         elif "end" in result:
             print("<<< SPEECH END")

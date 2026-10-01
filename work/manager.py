@@ -1,23 +1,20 @@
 """Application-level orchestration for durable JARVIS work state."""
 
-from . import store
+from . import lifecycle, store
 
 
 class WorkManager:
     """Own projects, tasks, runs, sessions, and their event history.
 
-    This layer is intentionally provider-agnostic. Codex, a future local agent,
-    or another provider can attach to an AgentSession without changing the
-    durable work model.
+    Provider adapters never own durable application state. They attach to an
+    AgentSession and report events through this manager.
     """
 
     def create_project(self, name, description="", root_path=None):
-        project = store.create_project(name, description, root_path)
-        return project
+        return store.create_project(name, description, root_path)
 
     def create_task(self, project_id, title, description="", priority=0):
-        task = store.create_task(project_id, title, description, priority)
-        return task
+        return store.create_task(project_id, title, description, priority)
 
     def create_run(self, task_id, metadata=None):
         run = store.create_run(task_id, metadata)
@@ -25,13 +22,10 @@ class WorkManager:
         return store.get_run(run["id"])
 
     def start_run(self, run_id):
-        run = store.update_run(run_id, status="RUNNING")
-        store.append_event(run_id, "RUN_STARTED")
-        return run
+        return lifecycle.transition_run(run_id, "RUNNING")
 
     def create_session(self, run_id, provider):
-        session = store.create_agent_session(run_id, provider)
-        return session
+        return store.create_agent_session(run_id, provider)
 
     def attach_provider_session(self, session_id, provider_session_id):
         return store.update_agent_session(
@@ -40,32 +34,32 @@ class WorkManager:
             provider_session_id=provider_session_id,
         )
 
+    def transition_session(self, session_id, status):
+        return lifecycle.transition_session(session_id, status)
+
+    def update_session_metadata(self, session_id, metadata):
+        return store.update_agent_session(session_id, metadata=metadata)
+
+    def create_handover_artifact(self, project_id, run_id, content, metadata=None):
+        return store.create_artifact(
+            project_id,
+            "OTHER",
+            "codex-handover",
+            run_id=run_id,
+            metadata={"kind": "HANDOVER", "content": content, **(metadata or {})},
+        )
+
     def record_event(self, run_id, event_type, payload=None, session_id=None):
         return store.append_event(run_id, event_type, payload, session_id)
 
     def complete_run(self, run_id):
-        run = store.update_run(run_id, status="SUCCEEDED", finished_at=store._utc_now())
-        store.append_event(run_id, "RUN_COMPLETED")
-        return run
+        return lifecycle.transition_run(run_id, "SUCCEEDED")
 
     def fail_run(self, run_id, error):
-        run = store.update_run(
-            run_id,
-            status="FAILED",
-            error=str(error),
-            finished_at=store._utc_now(),
-        )
-        store.append_event(run_id, "RUN_FAILED", {"error": str(error)})
-        return run
+        return lifecycle.transition_run(run_id, "FAILED", error=str(error))
 
     def cancel_run(self, run_id):
-        run = store.update_run(
-            run_id,
-            status="CANCELLED",
-            finished_at=store._utc_now(),
-        )
-        store.append_event(run_id, "RUN_CANCELLED")
-        return run
+        return lifecycle.transition_run(run_id, "CANCELLED")
 
     def get_run(self, run_id):
         return store.get_run(run_id)

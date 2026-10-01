@@ -1,13 +1,21 @@
-"""Domain constants for JARVIS work management.
-
-These values intentionally do not depend on Codex. Providers are adapters behind
-this domain model so the rest of JARVIS remains provider-agnostic.
-"""
+"""Domain constants for JARVIS work management."""
 
 PROJECT_STATUSES = {"ACTIVE", "PAUSED", "COMPLETED", "ARCHIVED"}
 TASK_STATUSES = {"PLANNED", "READY", "RUNNING", "BLOCKED", "COMPLETED", "CANCELLED"}
 RUN_STATUSES = {"QUEUED", "RUNNING", "WAITING_FOR_USER", "SUCCEEDED", "FAILED", "TIMED_OUT", "CANCELLED"}
-SESSION_STATUSES = {"STARTING", "ACTIVE", "WAITING", "COMPLETED", "FAILED", "CANCELLED"}
+
+# ROTATING is a recoverable transition state. ROTATED means the provider
+# thread was successfully replaced and the old session must not be resumed.
+SESSION_STATUSES = {
+    "STARTING",
+    "ACTIVE",
+    "WAITING",
+    "COMPLETED",
+    "ROTATING",
+    "ROTATED",
+    "FAILED",
+    "CANCELLED",
+}
 
 EVENT_TYPES = {
     "PROJECT_CREATED",
@@ -28,6 +36,8 @@ EVENT_TYPES = {
     "RUN_COMPLETED",
     "RUN_FAILED",
     "RUN_CANCELLED",
+    "HANDOVER_CREATED",
+    "SESSION_ROTATED",
 }
 
 APPROVAL_STATUSES = {"PENDING", "APPROVED", "REJECTED", "SUPERSEDED"}

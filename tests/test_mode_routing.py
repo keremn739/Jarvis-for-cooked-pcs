@@ -17,6 +17,32 @@ from mode import Mode, ModeState
 
 
 class ModeRoutingTests(unittest.TestCase):
+    def test_work_matcher_requires_explicit_software_context(self):
+        positive = (
+            "Implement this feature in the project",
+            "Debug this Python script",
+            "Fix this bug in the code",
+            "Refactor this function",
+            "Run the test suite",
+            "Write a Python script",
+        )
+        negative = (
+            "Fix my Wi-Fi",
+            "Create a shopping list",
+            "Add this to my memory",
+            "Remove that memory",
+            "How do I fix this?",
+            "Why is this code broken?",
+        )
+
+        for message in positive:
+            with self.subTest(message=message):
+                self.assertEqual(router.match_work(message)["type"], "WORK")
+
+        for message in negative:
+            with self.subTest(message=message):
+                self.assertIsNone(router.match_work(message))
+
     def test_online_normal_request_is_cloud(self):
         with patch.object(router, "ask_router", side_effect=OSError("Ollama unavailable")):
             plan = router.route_online("Explain Python dictionaries")

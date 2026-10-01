@@ -11,7 +11,10 @@ from memory import (
 from mode import Mode, ModeState
 from router import route_local, route_online
 from tools import execute_tool
-from interaction_history import enqueue_interaction, close_interaction_history
+from interaction_history import (
+    enqueue_interaction,
+    close_interaction_history,
+)
 from work.dispatch import dispatch_work
 
 
@@ -41,7 +44,12 @@ while True:
         elif new_mode == Mode.ONLINE:
             print("JARVIS: Online mode is on.")
 
-        elif (command.startswith(("remember ", "what do you remember", "find ", "forget ")) or command == "forget everything") and mode_state.mode != Mode.LOCAL:
+        elif (
+            command.startswith(
+                ("remember ", "what do you remember", "find ", "forget ")
+            )
+            or command == "forget everything"
+        ) and mode_state.mode != Mode.LOCAL:
             print("JARVIS: Enter local mode first to use private memory.")
 
         elif command.startswith("remember "):
@@ -51,7 +59,10 @@ while True:
             except ValueError as error:
                 print(f"JARVIS: Memory was not saved: {error}")
             else:
-                print("JARVIS: Memory saved." if result["created"] else "JARVIS: That memory is already saved.")
+                if result["created"]:
+                    print("JARVIS: Memory saved.")
+                else:
+                    print("JARVIS: That memory is already saved.")
 
         elif command == "what do you remember":
             memories = get_all_memories()
@@ -81,7 +92,10 @@ while True:
                     print("JARVIS [Work]: Starting Codex task...")
                     try:
                         result = dispatch_work(message)
-                        print(f"JARVIS [Work]: Run {result['id']} finished with status {result['status']}.")
+                        print(
+                            f"JARVIS [Work]: Run {result['id']} finished "
+                            f"with status {result['status']}."
+                        )
                     except Exception as error:
                         print(f"JARVIS [Work]: Work run failed: {error}")
 

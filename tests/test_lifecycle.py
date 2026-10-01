@@ -47,7 +47,10 @@ class LifecycleTests(unittest.TestCase):
         session = self.manager.create_session(run["id"], "codex")
         transition_session(session["id"], "ACTIVE")
         transition_session(session["id"], "WAITING")
-        self.assertEqual(self.manager.store.get_agent_session(session["id"])["status"], "WAITING") if hasattr(self.manager, "store") else self.assertTrue(True)
+
+        import work.store as store
+        persisted = store.get_agent_session(session["id"])
+        self.assertEqual(persisted["status"], "WAITING")
 
 
 if __name__ == "__main__":

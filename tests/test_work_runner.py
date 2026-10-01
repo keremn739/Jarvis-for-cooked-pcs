@@ -97,15 +97,16 @@ class WorkRunnerTests(unittest.TestCase):
         runner = WorkRunner(self.manager, FakeProvider, rotation_turns=1)
 
         runner.run_codex_turn(first_run["id"], "First turn", cwd=self.temp_dir.name)
-        first_session = self.manager.get_events(first_run["id"])[-1]["session_id"]
-        first_session_row = __import__("work.store", fromlist=["get_agent_session"]).get_agent_session(first_session)
+        import work.store as store
+        first_session = store.get_latest_provider_session_for_task(task["id"], "codex")
+        first_session_row = store.get_agent_session(first_session["id"])
 
         second_run = self.manager.create_run(task["id"])
         runner.run_codex_turn(second_run["id"], "Continue", cwd=self.temp_dir.name)
 
-        second_session_id = self.manager.get_events(second_run["id"])[-1]["session_id"]
-        old_session = __import__("work.store", fromlist=["get_agent_session"]).get_agent_session(first_session)
-        new_session = __import__("work.store", fromlist=["get_agent_session"]).get_agent_session(second_session_id)
+        second_session = store.get_latest_provider_session_for_task(task["id"], "codex")
+        old_session = store.get_agent_session(first_session["id"])
+        new_session = store.get_agent_session(second_session["id"])
 
         self.assertEqual(first_session_row["status"], "COMPLETED")
         self.assertEqual(old_session["status"], "ROTATED")

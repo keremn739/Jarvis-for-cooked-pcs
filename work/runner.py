@@ -53,6 +53,7 @@ class WorkRunner:
 
         handover = ""
         try:
+            self.manager.start_run(run_id)
             provider.start()
 
             if should_rotate:
@@ -132,7 +133,6 @@ class WorkRunner:
                     prompt = render_provider_context(context) + "\n\nUser request:\n" + message
                 current_turns = previous_turns + 1
 
-            self.manager.start_run(run_id)
             self.manager.update_session_metadata(
                 session["id"],
                 {

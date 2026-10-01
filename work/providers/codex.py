@@ -249,7 +249,7 @@ class CodexProvider:
             raise CodexProviderError("Codex app-server is not running")
         payload = json.dumps(message, ensure_ascii=False, separators=(",", ":"))
         with self._write_lock:
-            process.stdin.write(payload + "\\n")
+            process.stdin.write(payload + "\n")
             process.stdin.flush()
 
     def _next_request_id(self):

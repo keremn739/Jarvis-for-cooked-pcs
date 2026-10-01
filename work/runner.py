@@ -73,7 +73,29 @@ class WorkRunner:
                     self.manager.transition_session(previous_session["id"], "COMPLETED")
                     raise
 
-                self.manager.attach_provider_session(session["id"], thread["id"])
+                self.manager.attach_provider_session(
+                    session["id"],
+                    thread["id"],
+                )
+                self.manager.update_session_metadata(
+                    previous_session["id"],
+                    {
+                        **previous_session.get("metadata", {}),
+                        "replacement_session_id": session["id"],
+                        "handover_artifact_id": handover_artifact["id"],
+                    },
+                )
+                self.manager.update_session_metadata(
+                    session["id"],
+                    {
+                        "replaced_session_id": previous_session["id"],
+                        "handover_artifact_id": handover_artifact["id"],
+                    },
+                )
+                # Finalize the old session before recording the informational
+                # rotation event. If the event write fails, the durable session
+                # states still describe the truth.
+                self.manager.transition_session(previous_session["id"], "ROTATED")
                 self.manager.record_event(
                     run_id,
                     "SESSION_ROTATED",
@@ -86,7 +108,6 @@ class WorkRunner:
                     },
                     session["id"],
                 )
-                self.manager.transition_session(previous_session["id"], "ROTATED")
                 prompt = (
                     render_provider_context(build_run_context(run_id))
                     + "\n\nPrevious session handover:\n"

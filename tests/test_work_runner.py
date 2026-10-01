@@ -127,6 +127,33 @@ class WorkRunnerTests(unittest.TestCase):
         self.assertEqual(artifact["metadata"]["kind"], "HANDOVER")
         self.assertIn("Continue from the existing router implementation.", artifact["metadata"]["content"])
 
+    def test_rotation_failure_restores_old_session(self):
+        project = self.manager.create_project("Rotation rollback")
+        task = self.manager.create_task(project["id"], "Long task")
+        first_run = self.manager.create_run(task["id"])
+        runner = WorkRunner(self.manager, FakeProvider, rotation_turns=1)
+        runner.run_codex_turn(first_run["id"], "First turn", cwd=self.temp_dir.name)
+
+        import work.store as store
+        old_session = store.get_latest_provider_session_for_task(task["id"], "codex")
+        self.assertEqual(old_session["status"], "COMPLETED")
+
+        class FailingRotationProvider(FakeProvider):
+            def create_thread(self, *, cwd=None):
+                if self.thread_id is not None:
+                    raise RuntimeError("replacement thread failed")
+                return super().create_thread(cwd=cwd)
+
+        second_run = self.manager.create_run(task["id"])
+        runner = WorkRunner(self.manager, FailingRotationProvider, rotation_turns=1)
+
+        with self.assertRaises(RuntimeError):
+            runner.run_codex_turn(second_run["id"], "Continue", cwd=self.temp_dir.name)
+
+        restored = store.get_agent_session(old_session["id"])
+        self.assertEqual(restored["status"], "COMPLETED")
+        self.assertEqual(store.get_run(second_run["id"])["status"], "FAILED")
+
     def test_provider_failure_marks_run_failed(self):
         class FailingProvider(FakeProvider):
             def send(self, message, *, cwd=None):

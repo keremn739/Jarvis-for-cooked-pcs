@@ -29,7 +29,7 @@ class WorkRunner:
             raise ValueError(f"Run does not exist: {run_id}")
 
         session = self.manager.create_session(run_id, "codex")
-        provider = self.provider_factory(cwd=cwd, on_notification=lambda event: self._record_provider_event(run_id, session["id"], event))
+        provider = self.provider_factory(cwd=cwd)
 
         try:
             provider.start()
@@ -54,12 +54,14 @@ class WorkRunner:
             return
 
         event_type = self._event_type(method)
-        payload = notification.get("params", {})
         if event_type is None:
-            # Preserve useful but currently unmapped protocol events without
-            # pretending that JARVIS understands their semantics yet.
             return
-        self.manager.record_event(run_id, event_type, payload, session_id)
+        self.manager.record_event(
+            run_id,
+            event_type,
+            notification.get("params", {}),
+            session_id,
+        )
 
     @staticmethod
     def _event_type(method):

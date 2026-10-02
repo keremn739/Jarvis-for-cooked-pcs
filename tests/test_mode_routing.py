@@ -44,30 +44,67 @@ class ModeRoutingTests(unittest.TestCase):
                 self.assertIsNone(router.match_work(message))
 
     def test_online_normal_request_is_cloud(self):
-        with patch.object(router, "ask_router", side_effect=OSError("Ollama unavailable")):
+        with patch.object(router, "route_with_groq", side_effect=OSError("Groq unavailable")):
             plan = router.route_online("Explain Python dictionaries")
         self.assertEqual([step["type"] for step in plan["steps"]], ["CLOUD"])
 
     def test_online_explicit_tool_request(self):
-        plan = router.route_online("Open Chrome")
+        with patch.object(
+            router,
+            "route_with_groq",
+            return_value={
+                "steps": [
+                    {"type": "TOOL", "action": "OPEN_APP", "target": "chrome", "content": None}
+                ]
+            },
+        ):
+            plan = router.route_online("Open Chrome")
         self.assertEqual(plan["steps"][0]["type"], "TOOL")
         self.assertEqual(plan["steps"][0]["target"], "chrome")
 
     def test_tool_then_cloud_order(self):
-        steps = router.route_online("Open Chrome and explain Python dictionaries")["steps"]
+        with patch.object(
+            router,
+            "route_with_groq",
+            return_value={
+                "steps": [
+                    {"type": "TOOL", "action": "OPEN_APP", "target": "chrome", "content": None},
+                    {"type": "CLOUD", "action": None, "target": None, "content": "explain Python dictionaries"},
+                ]
+            },
+        ):
+            steps = router.route_online("Open Chrome and explain Python dictionaries")["steps"]
         self.assertEqual([step["type"] for step in steps], ["TOOL", "CLOUD"])
 
     def test_cloud_then_tool_order(self):
-        steps = router.route_online("Explain Python dictionaries, then open Chrome")["steps"]
+        with patch.object(
+            router,
+            "route_with_groq",
+            return_value={
+                "steps": [
+                    {"type": "CLOUD", "action": None, "target": None, "content": "Explain Python dictionaries"},
+                    {"type": "TOOL", "action": "OPEN_APP", "target": "chrome", "content": None},
+                ]
+            },
+        ):
+            steps = router.route_online("Explain Python dictionaries, then open Chrome")["steps"]
         self.assertEqual([step["type"] for step in steps], ["CLOUD", "TOOL"])
 
     def test_how_question_is_not_a_tool_request(self):
-        with patch.object(router, "ask_router", return_value='{"steps":[{"type":"CLOUD","content":"How do I open Chrome?"}]}'):
+        with patch.object(
+            router,
+            "route_with_groq",
+            return_value={
+                "steps": [
+                    {"type": "CLOUD", "action": None, "target": None, "content": "How do I open Chrome?"}
+                ]
+            },
+        ):
             steps = router.route_online("How do I open Chrome?")["steps"]
         self.assertEqual(steps[0]["type"], "CLOUD")
 
     def test_explicit_local_mode_switch_is_deterministic(self):
-        with patch.object(router, "ask_router", side_effect=AssertionError("switch must not call planner")):
+        with patch.object(router, "route_with_groq", side_effect=AssertionError("switch must not call Groq")):
             plan = router.route_online("Jarvis, go into local mode.")
         self.assertEqual(plan, {"steps": [], "switch_to": "LOCAL"})
 
@@ -97,7 +134,15 @@ class ModeRoutingTests(unittest.TestCase):
         self.assertEqual(state.apply_command("Jarvis, go into local mode."), Mode.LOCAL)
 
     def test_online_router_never_emits_local_or_memory_steps(self):
-        with patch.object(router, "ask_router", return_value='{"steps":[{"type":"LOCAL","content":"private","memory":true}]}'):
+        with patch.object(
+            router,
+            "route_with_groq",
+            return_value={
+                "steps": [
+                    {"type": "LOCAL", "action": None, "target": None, "content": "private"}
+                ]
+            },
+        ):
             plan = router.route_online("What GPU do I have?")
         self.assertEqual([step["type"] for step in plan["steps"]], ["CLOUD"])
         self.assertFalse(any(step.get("memory") for step in plan["steps"]))
